@@ -116,7 +116,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="2"
+				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -187,7 +187,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="&quot;$(SolutionDir)\gtest\include&quot;"
 				PreprocessorDefinitions="_LLTTEST"
-				RuntimeLibrary="1"
+				RuntimeLibrary="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -200,7 +200,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(SolutionDir)\gtest\lib\gtestd.lib"
+				AdditionalDependencies="$(SolutionDir)gtest\lib\gtestd.lib; nafxcw.lib;LIBCMT.lib"
+				IgnoreDefaultLibraryNames="nafxcw.lib;LIBCMT.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -255,6 +256,10 @@
 			</File>
 			<File
 				RelativePath=".\Demo\GetCertainWords.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Demo\sourceDataFile.cpp"
 				>
 			</File>
 		</Filter>

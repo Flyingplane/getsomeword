@@ -96,6 +96,6 @@ unicodeMap GBK D:\Xpdf\xpdf-chinese-simplified\GBK.unicodeMap
 cMapDir Adobe-GB1 D:\Xpdf\xpdf-chinese-simplified\CMap
 toUnicodeDir D:\Xpdf\xpdf-chinese-simplified\CMap
 fontDir C:\windows\Fonts
-#displayCIDFontTT Adobe-GB1 c:\windows\fonts\SimHei.ttf
+displayCIDFontTT Adobe-GB1 c:\windows\fonts\SimHei.ttf
 textEOL dos
 

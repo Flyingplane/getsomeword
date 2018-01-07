@@ -2,6 +2,7 @@
 #include <string>
 #include "Demo.h"
 #include "GetCertainWords.h"
+#include "sourceDataFile.h"
 #ifdef _LLTTEST
 #include <gtest/gtest.h>
 #endif
@@ -26,8 +27,7 @@ int main(int argc, char **argv)
 	testForFIO();
 	cout<< "this is end!!!!" << endl ; 
 
-	char temp ;
-	cin >> temp ; 
+	sourceTest("source.txt");
 	return 0 ; 
 #endif
 }

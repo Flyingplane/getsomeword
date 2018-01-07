@@ -78,10 +78,6 @@ void GetAllKeyStrInStr(const char * Src , const char* KeyStr , int &TotalKeyNum 
 
 
 // 获取指定位置一句话 ， 已句号或起点为边界。
-extern bool ReadUTF8StringFile(CString Path, CString& str);
-extern void Convert(const char* strIn,char* strOut, int sourceCodepage, int targetCodepage)  ;
-
-
 int g_NumTotalKeys = 0 ; 
 void testForFIO( void )
 {
@@ -95,9 +91,6 @@ void testForFIO( void )
 		keyWord[1000] = '\0';
 		keyfile.close();
 		cout << "get keyword success . \n keyword is "<< keyWord << endl ;
-		char ConvertOut[100] ={0};
-		Convert(keyWord , ConvertOut , 99 , 99 );
-		cout << "ConvertOut" << ConvertOut << endl ; 
 	}
 	else
 	{
@@ -106,12 +99,6 @@ void testForFIO( void )
 		cout<< "#############文件内只写一行。############" << endl ; 
 		return ; 
 	}
-	CString CskeyWord ;
-	CString CskeyWordfile(g_pKeyWord) ;
-
-	ReadUTF8StringFile(CskeyWordfile , CskeyWord);
-	LPCTSTR p = CskeyWord;
-	cout << p << "\n";
 
 	ifstream infile;
 	infile.open ( g_pSourceFile , ifstream::in);
@@ -137,53 +124,3 @@ void testForFIO( void )
 }
 
 
-
-///UTF-8 转 ANSI
-void Convert(const char* strIn,char* strOut, int sourceCodepage, int targetCodepage)  
-  {  
-      int len=strlen(strIn);  
-      int unicodeLen=MultiByteToWideChar(sourceCodepage,0,strIn,-1,NULL,0);  
-      wchar_t* pUnicode;  
-      pUnicode=new wchar_t[unicodeLen+1];  
-      memset(pUnicode,0,(unicodeLen+1)*sizeof(wchar_t));  
-      MultiByteToWideChar(sourceCodepage,0,strIn,-1,(LPWSTR)pUnicode,unicodeLen);  
-      BYTE * pTargetData = NULL;  
-      int targetLen=WideCharToMultiByte(targetCodepage,0,(LPWSTR)pUnicode,-1,(char *)pTargetData,0,NULL,NULL);  
-      pTargetData=new BYTE[targetLen+1];  
-      memset(pTargetData,0,targetLen+1);  
-      WideCharToMultiByte(targetCodepage,0,(LPWSTR)pUnicode,-1,(char *)pTargetData,targetLen,NULL,NULL);  
-      strcpy(strOut,(char*)pTargetData);  
-      delete pUnicode;  
-      delete pTargetData;  
-   } 
-
-bool ReadUTF8StringFile(CString Path, CString& str)
-{
-
-
-	CFile fileR;
-	if(!fileR.Open(Path,CFile::modeRead|CFile::typeBinary))
-	{
-		MessageBox(NULL,_T("无法打开文件:")+Path,_T("错误"),MB_ICONERROR|MB_OK);
-		return false;
-	}
-	BYTE head[3];
-	fileR.Read(head,3);
-	if(!(head[0]==0xEF && head[1]==0xBB && head[2]==0xBF))
-	{
-		fileR.SeekToBegin();
-	}
-	ULONGLONG FileSize=fileR.GetLength();
-	char* pContent=(char*)calloc(FileSize+1,sizeof(char));
-	fileR.Read(pContent,FileSize);
-	fileR.Close();
-	int n=MultiByteToWideChar(CP_UTF8,0,pContent,FileSize+1,NULL,0);
-	wchar_t* pWideChar=(wchar_t*)calloc(n+1,sizeof(wchar_t));
-	MultiByteToWideChar(CP_UTF8,0,pContent,FileSize+1,pWideChar,n);
-	str=CString(pWideChar);
-	free(pContent);
-	free(pWideChar);
-	return true;
-
-
-}
