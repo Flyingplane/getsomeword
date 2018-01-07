@@ -1,5 +1,7 @@
 #include "sourceDataFile.h"
 
+#include <sstream>
+
 unsigned int debug_mode = 0 ;
 unsigned int g_debug_leave = 1 ;
 fstream g_debugInfo("debuginfo.txt" , ios_base::out);
@@ -56,17 +58,16 @@ void sourcedatafile::Initialize()
 void sourcedatafile::FileReadTest()
 {
 	ifstream examplefile(m_fileName.c_str());
-	string tempLine ;
+	cout << m_fileName.c_str();
+	string tempLine = "";
 	if (! examplefile.is_open())
 	{
-		cout << "Error opening file"; 
+		cout << "Error opening file"<< m_fileName.c_str()<< endl; 
 		return;
 	}
 	while (!examplefile.eof())
 	{
-		//examplefile.getline(tempLine,100);
 		getline(examplefile , tempLine );
-		//cout << tempLine << endl;
 		updateInnerDatabyLine(tempLine);
 		
 	}
@@ -150,6 +151,19 @@ bool sourcedatafile::IsSencondTitle(const string& Line)
 }
 
 
+GetKeyContent::GetKeyContent(string filename):sourcedatafile(filename)
+{
+	m_keyContentFlag = false ;
+	m_keyContentCount = 0 ;
+	m_pKeyContentfile = NULL ;
+	m_keyContentFileList.clear();
+};
+GetKeyContent::~GetKeyContent()
+{
+	m_keyContentFileList.clear();
+	setKeyContentFlag(false);
+	m_keyContentCount = 0 ;
+};
 bool GetKeyContent::updateInnerDatabyLine(const string& OriginalLine)
 {
 	//读取出来的是空行，不处理
@@ -208,10 +222,17 @@ void GetKeyContent::setKeyContentFlag( bool newFlag )
 		if(newFlag == true)
 		{
 			m_keyContentCount++;
-			string keyFilename = "KeyConten_";
-			keyFilename += (char)((char)m_keyContentCount + '0');
-			keyFilename += ".txt";
-			m_pKeyContentfile = new fstream(keyFilename.c_str() , ios_base::out);
+			stringstream ss;
+			size_t fileLen = m_fileName.length();
+			ss << m_fileName.substr(0,fileLen-strlen(".txt"));
+			ss << "_keycon_" << m_keyContentCount << ".txt" ; 
+			m_keyContentFileList.push_back(ss.str());
+			////当前匹配到的结果ID
+			//// 在源文件中的页码
+			m_pKeyContentfile = new fstream(ss.str().c_str() , ios_base::out);
+			//写入文件首2行。
+			(*m_pKeyContentfile) << "sourceFile: " << m_fileName <<endl;
+			(*m_pKeyContentfile) << "page:" << m_PageNum << " line :" << m_lineNum  << endl;
 		}
 		else
 		{
@@ -257,27 +278,200 @@ bool GetKeyContent::FindkeyEndPos()
 	}
 	return false ;
 }
-void sourceTest( string filename)
+
+
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+exportWordSentence::exportWordSentence()
 {
+
+}
+
+exportWordSentence::exportWordSentence(string sourcefile ,string keyword ):m_keyword(keyword)
+{
+	m_SentenceCount = 0;
+	size_t fileLen = sourcefile.length();
+	m_exportFileName = sourcefile.substr(0,fileLen-strlen(".txt"));
+	m_exportFileName += "_";
+	m_exportFileName += m_keyword.c_str() ;
+	m_exportFileName += ".csv";
+	m_currentline = "";
+	sentenceList.clear();
+}
+exportWordSentence::~exportWordSentence()
+{
+	sentenceList.clear();
+}
+void exportWordSentence::UpdataInerDatebynewline(const string& line)
+{
+	m_currentline = line ;
+	size_t beginPos = 0 ;
+	size_t endPos = 0;
+	do 
+	{		
+		endPos = m_currentline.find("。", endPos+2/*strlen("。")*/);
+		string Sentence = ""; // 句子，已句号结尾。
+		if(endPos != string::npos )
+		{
+			 Sentence = m_currentline.substr(beginPos , endPos-beginPos );
+		}
+		else
+		{
+			Sentence = m_currentline.substr(beginPos);
+		}
+		beginPos = endPos ;
+		FindKeyword(Sentence);
+	} while (beginPos != string::npos );
+}
+void exportWordSentence::FindKeyword(const string& sentence)
+{
+	size_t found = sentence.find(m_keyword);
+	if(found == string::npos)
+	{
+		return ;
+	}
+	do 
+	{
+		m_SentenceCount++;
+		sentenceList.push_back(sentence);
+		found = sentence.find(m_keyword , found+m_keyword.length()); 
+	} while (found != string::npos);
+}
+void exportWordSentence::printfInerData()
+{
+	size_t fileLen = m_exportFileName.length();
+	m_exportFileName = m_exportFileName.substr(0,fileLen-strlen(".txt"));
+	stringstream ss ;
+	ss << m_exportFileName << "_" << m_SentenceCount << ".csv";
+	fstream outputfile(ss.str().c_str() , ios_base::out );
+	list<string>::iterator it;
+
+	outputfile << "begin" <<endl;
+	for ( it=sentenceList.begin() ; it != sentenceList.end(); it++ )
+	{
+		outputfile << m_keyword << "," << (*it).c_str() << endl;
+	}
+	outputfile << "end" <<endl;
+	outputfile.close();
+}
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+GetWords::GetWords()
+{
+
+}
+GetWords::GetWords(string contentfile , string keywordfile):
+			m_ContentFileName(contentfile),m_keyWordFile(keywordfile)
+{
+	m_keyWordmap.clear();
+}
+GetWords::~GetWords()
+{
+	map<string ,exportWordSentence*>::iterator it;
+	// show content:
+	for ( it=m_keyWordmap.begin() ; it != m_keyWordmap.end(); it++ )
+	{
+		exportWordSentence* pOutputTemp = (*it).second ;
+		delete pOutputTemp ;
+	}
+	m_keyWordmap.clear();
+}
+bool GetWords::Initialize()
+{
+	return true ;
+}
+
+void GetWords::Extractkeyword()
+{
+	ifstream examplefile(m_keyWordFile.c_str());
+	cout << m_keyWordFile.c_str() << endl;
+	string tempLine = "";
+	if (! examplefile.is_open())
+	{
+		cout << "Error opening file"<< m_keyWordFile.c_str()<< endl; 
+		return;
+	}
+	while (!examplefile.eof())
+	{
+		getline(examplefile , tempLine );
+		exportWordSentence* pOutputTemp = new exportWordSentence(m_ContentFileName ,tempLine );
+		m_keyWordmap.insert(pair<string ,exportWordSentence*>(tempLine , pOutputTemp) );
+	}
+	examplefile.close();
+}
+void GetWords::checkcontentfilebyline()
+{
+	ifstream examplefile(m_ContentFileName.c_str());
+	cout << m_ContentFileName.c_str() << endl;
+	string tempLine = "";
+	if (! examplefile.is_open())
+	{
+		cout << "Error opening file"<< m_ContentFileName.c_str()<< endl; 
+		return;
+	}
+	while (!examplefile.eof())
+	{
+		getline(examplefile , tempLine );
+		map<string ,exportWordSentence*>::iterator it;
+
+		// show content:
+		for ( it=m_keyWordmap.begin() ; it != m_keyWordmap.end(); it++ )
+		{
+			//cout << (*it).first << endl;
+			exportWordSentence* pOutputTemp = (*it).second ;
+			pOutputTemp->UpdataInerDatebynewline(tempLine);
+		}
+	}
+	examplefile.close();
+
+	map<string ,exportWordSentence*>::iterator it;
+	// show content:
+	for ( it=m_keyWordmap.begin() ; it != m_keyWordmap.end(); it++ )
+	{
+		//cout << (*it).first << endl;
+		exportWordSentence* pOutputTemp = (*it).second ;
+		pOutputTemp->printfInerData();
+	}
+}
+void sourceTest( string filename , string KeyWordFile)
+{
+	//读取源文件，并将源文件内的有效段提取出来
 	GetKeyContent SourceFile(filename) ;
 	
 	SourceFile.Initialize();
 
 	SourceFile.FileReadTest();
 
+
+	list<string>::iterator it;
+
+	//一个文件可能获取到多个content
+	for ( it=(SourceFile.m_keyContentFileList).begin() ; it != (SourceFile.m_keyContentFileList).end(); it++ )
+	{
+		cout << " " << *it<< endl;
+		GetWords getwords( *it , KeyWordFile );
+		getwords.Initialize();
+		getwords.Extractkeyword();
+		getwords.checkcontentfilebyline();
+	}
 	g_debugInfo.close();
 
-	string testStr[] ={ 
-		"第一节 第二节 第三节 第四节 第五节 第六节",
-		"",
-		"第一",
-	};
-	for( int indexa = 0 ; indexa < 3 ; indexa ++)
-	for(int index = 0 ; index < MAX_FIRSTTITLE_NUM ; index++)
-	{
-		//cout << indexa << index << ": "<<testStr[indexa].compare(0 , strlen(FIRSTTITLE[index]) ,FIRSTTITLE[index]) << endl;
-		cout << indexa << index << ": "<<testStr[indexa].find(FIRSTTITLE[index]) << endl;
-	}
-	string strTT = "三、公司关于公司未来发展的讨论与分析";
-	cout << strTT.find(KEYCONTENT);
+
 }
+
+
+//string testStr[] ={ 
+//	"第一节 第二节 第三节 第四节 第五节 第六节",
+//	"",
+//	"第一",
+//};
+//for( int indexa = 0 ; indexa < 3 ; indexa ++)
+//for(int index = 0 ; index < MAX_FIRSTTITLE_NUM ; index++)
+//{
+//	//cout << indexa << index << ": "<<testStr[indexa].compare(0 , strlen(FIRSTTITLE[index]) ,FIRSTTITLE[index]) << endl;
+//	cout << indexa << index << ": "<<testStr[indexa].find(FIRSTTITLE[index]) << endl;
+//}
+//string strTT = "三、公司关于公司未来发展的讨论与分析";
+//cout << strTT.find(KEYCONTENT);

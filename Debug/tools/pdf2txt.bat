@@ -6,5 +6,7 @@ for /f "delims=\" %%a in ('dir /b /a-d /o-d "%FolderName%\*.PDF"') do (
   set FileName=%%a
 )
 echo on
-pdftotext.exe -enc "GBK" %FileName% source.txt
+set dirFileName=%FileName:~0,-4%.txt
+pdftotext.exe -enc "GBK" %FileName% %dirFileName%
+DemoGtest.exe %dirFileName%
 pause

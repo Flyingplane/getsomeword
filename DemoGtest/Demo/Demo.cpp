@@ -7,12 +7,8 @@
 #include <gtest/gtest.h>
 #endif
 
-//待测函数
-int Plus(int a, int b)
-{
-       return a + b;
-}
 
+// 传入参数：需转换的文件名
 int main(int argc, char **argv)
 {
 #ifdef _LLTTEST
@@ -22,27 +18,30 @@ int main(int argc, char **argv)
        
        return RUN_ALL_TESTS();
 #else
-	using namespace std ; 
-	cout << "hello world" << endl ; 
-	testForFIO();
-	cout<< "this is end!!!!" << endl ; 
+	//解决中文文件名打不开问题
+	std::locale::global(std::locale(""));
 
-	sourceTest("source.txt");
+	//如果没有输入参数，则默认使用source.txt文件
+	string SourceFile = "source.txt" ;
+	string Keywordfile = "keyword.txt";
+	//打印输入的参数
+	for(int i=0;i<argc;i++)
+	{
+		cout<<argv[i]<<'\t';
+		if((i == 1) && (argv[i] != 0 ))
+		{
+			SourceFile = argv[i];
+		}
+	}
+	cout<<'\n';
+	
+	//using namespace std ; 
+	//cout << "hello world" << endl ; 
+	//testForFIO();
+	//cout<< "this is end!!!!" << endl ; 
+
+	sourceTest(SourceFile , Keywordfile);
 	return 0 ; 
 #endif
 }
 
-void sort(char *p , int length )
-{
-	char temp = 0 ; 
-	for(int i = 0 ; i < length-1 ; i++ )
-		for( int j = 0 ; j < length-1-i ; j++ )
-		{
-			if(  p[j] > p[j+1] ) 
-			{
-				temp = p[j+1];
-				p[j+1] = p[j];
-				p[j] = temp ; 
-			}
-		}
-}

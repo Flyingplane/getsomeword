@@ -4,6 +4,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <list>
+#include <map>
 
 using namespace std;
 
@@ -41,19 +43,12 @@ class GetKeyContent :public sourcedatafile
 public:
 	bool m_keyContentFlag ;
 	int m_keyContentCount ;
+	list<string> m_keyContentFileList ;
 	fstream* m_pKeyContentfile ;
 public:
 	GetKeyContent();
-	GetKeyContent(string filename):sourcedatafile(filename)
-	{
-		m_keyContentFlag = false ;
-		m_keyContentCount = 0 ;
-		m_pKeyContentfile = NULL ;
-	};
-	~GetKeyContent()
-	{
-
-	};
+	GetKeyContent(string filename);
+	~GetKeyContent();
 	bool FindKeyStartPos( );
 	bool FindkeyEndPos( );
 	void UpdateKeyConentFlag(  );
@@ -63,6 +58,37 @@ public:
 	bool getKeyContentFlag( );
 
 };
-void sourceTest( string filename);
+void sourceTest( string filename , string KeyWordFile);
 
+class exportWordSentence
+{
+public:
+	string m_exportFileName ;
+	string m_keyword;
+	fstream m_fFile ; 
+	unsigned int m_SentenceCount ;
+	string m_currentline;
+	list<string> sentenceList ;
+public:
+	exportWordSentence();
+	exportWordSentence(string sourcefile,string keyword ) ;
+	~exportWordSentence();
+	void UpdataInerDatebynewline(const string& line);
+	void printfInerData();
+	void FindKeyword(const string& sentence);
+};
+class GetWords
+{
+public:
+	string m_ContentFileName ;
+	string m_keyWordFile ;
+	map<string ,exportWordSentence*> m_keyWordmap ;
+public:
+	GetWords();
+	GetWords(string contentfile , string keywordfile);
+	~GetWords();
+	bool Initialize();
+	void Extractkeyword();
+	void checkcontentfilebyline();
+};
 #endif
